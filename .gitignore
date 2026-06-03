@@ -5,3 +5,7 @@ data/*.sqlite-wal
 Thumbs.db
 .playwright-mcp/
 tmp/
+__pycache__/
+research-engine/**/__pycache__/
+research-engine/runs/
+research-engine/examples/runs/
