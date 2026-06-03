@@ -15,6 +15,7 @@ class RunResult:
     stderr: str
     seconds: float
     error: str | None
+    return_code: int | None = None
 
 
 class ExperimentRunner:
@@ -49,6 +50,7 @@ class ExperimentRunner:
                 stderr=exc.stderr or "",
                 seconds=time.perf_counter() - start,
                 error=f"timeout after {self.seconds_per_trial}s",
+                return_code=None,
             )
 
         score = self._read_metric(workspace, completed.stdout)
@@ -59,6 +61,7 @@ class ExperimentRunner:
             stderr=completed.stderr,
             seconds=time.perf_counter() - start,
             error=error,
+            return_code=completed.returncode,
         )
 
     def _read_metric(self, workspace: Path, stdout: str) -> float | None:

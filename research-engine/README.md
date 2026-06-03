@@ -4,6 +4,8 @@ Clean-room autonomous research loop inspired by the general idea of iterative ex
 
 This code does not copy `karpathy/autoresearch`. It is a fresh implementation with a different structure and a generic experiment runner.
 
+See `CLEANROOM.md` for the clean-room note.
+
 ## What It Does
 
 - Creates an isolated trial workspace
@@ -19,10 +21,10 @@ Lower scores are better by default.
 
 ```powershell
 cd research-engine
-python -m autoresearch_lab --config examples/demo-config.json
+python -m autoresearch_lab run --config examples/demo-config.json
 ```
 
-The demo runs `examples/objective.py`, which prints a synthetic score.
+The demo runs `examples/demo-workspace/objective.py`, which prints a synthetic score.
 
 ## Files
 
@@ -31,8 +33,9 @@ The demo runs `examples/objective.py`, which prints a synthetic score.
 - `autoresearch_lab/loop.py` - research loop
 - `autoresearch_lab/proposer.py` - clean parameter mutation engine
 - `autoresearch_lab/runner.py` - subprocess execution and metric parsing
+- `autoresearch_lab/report.py` - Markdown and HTML report writer
 - `examples/demo-config.json` - demo configuration
-- `examples/objective.py` - toy objective function
+- `examples/demo-workspace/objective.py` - toy objective function
 
 ## Using Your Own Experiment
 
@@ -47,9 +50,41 @@ Create a JSON config like:
   "parameter_file": "params.json",
   "iterations": 20,
   "seconds_per_trial": 300,
-  "maximize": false
+  "maximize": false,
+  "patience": 8,
+  "baseline_first": true,
+  "report": true
 }
 ```
 
 Your command must either print the metric to stdout or write a JSON file if `metric_file` is configured.
+
+## Commands
+
+```powershell
+python -m autoresearch_lab validate --config examples/demo-config.json
+python -m autoresearch_lab run --config examples/demo-config.json
+python -m autoresearch_lab status --config examples/demo-config.json
+python -m autoresearch_lab report --config examples/demo-config.json
+```
+
+## Outputs
+
+Each run writes:
+
+- `ledger.jsonl` - every trial
+- `state.json` - resume state
+- `best/` - best accepted workspace
+- `trials/trial-0001/` etc. - isolated trial workspaces
+- `report.md` and `report.html` - readable summaries
+
+## Optional Agent Mode
+
+Set `agent_command` in the config to let another tool modify the trial workspace before the experiment command runs. The engine still handles isolation, metric parsing, acceptance, reports, and resume.
+
+## Tests
+
+```powershell
+python -m unittest discover -s tests
+```
 

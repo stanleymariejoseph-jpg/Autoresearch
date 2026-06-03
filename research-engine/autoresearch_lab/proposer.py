@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 import json
@@ -10,6 +10,7 @@ import random
 @dataclass(frozen=True)
 class Proposal:
     summary: str
+    changes: dict[str, Any] = field(default_factory=dict)
 
 
 class ParameterProposer:
@@ -37,7 +38,10 @@ class ParameterProposer:
         params[key] = self._mutate(old_value)
         path.write_text(json.dumps(params, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
-        return Proposal(f"trial {trial}: changed {key} from {old_value!r} to {params[key]!r}")
+        return Proposal(
+            summary=f"trial {trial}: changed {key} from {old_value!r} to {params[key]!r}",
+            changes={key: {"from": old_value, "to": params[key]}},
+        )
 
     def _mutate(self, value: Any) -> Any:
         if isinstance(value, bool):

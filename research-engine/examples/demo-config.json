@@ -7,6 +7,9 @@
   "iterations": 8,
   "seconds_per_trial": 20,
   "maximize": false,
-  "seed": 42
+  "seed": 42,
+  "patience": 5,
+  "baseline_first": true,
+  "report": true
 }
 

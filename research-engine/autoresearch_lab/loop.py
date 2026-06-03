@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 from pathlib import Path
+import json
 import shutil
 import subprocess
 
 from .config import ResearchConfig
 from .ledger import Ledger, TrialRecord
 from .proposer import ParameterProposer
+from .report import ReportWriter
 from .runner import ExperimentRunner
 
 
@@ -16,6 +18,7 @@ class ResearchLoop:
         self.run_dir = config.output_dir / config.name
         self.trials_dir = self.run_dir / "trials"
         self.best_dir = self.run_dir / "best"
+        self.state_path = self.run_dir / "state.json"
         self.ledger = Ledger(self.run_dir / "ledger.jsonl")
         self.proposer = ParameterProposer(config.parameter_file, config.seed)
         self.runner = ExperimentRunner(
@@ -25,24 +28,35 @@ class ResearchLoop:
             metric_file=config.metric_file,
         )
         self.best_score: float | None = None
+        self.next_trial = 1
+        self.no_improvement = 0
 
     def run(self) -> None:
         self.run_dir.mkdir(parents=True, exist_ok=True)
         self.trials_dir.mkdir(parents=True, exist_ok=True)
+        self._load_state()
 
-        for trial in range(1, self.config.iterations + 1):
+        stop_trial = self.next_trial + self.config.iterations
+        for trial in range(self.next_trial, stop_trial):
             trial_workspace = self.trials_dir / f"trial-{trial:04d}"
-            self._copy_workspace(self.config.workspace, trial_workspace)
+            source = self.best_dir if self.best_dir.exists() else self.config.workspace
+            self._copy_workspace(source, trial_workspace, self.config.ignore_patterns)
 
-            proposal = self._prepare_trial(trial_workspace, trial)
+            proposal = "baseline trial"
+            if not (trial == 1 and self.config.baseline_first and self.best_score is None):
+                proposal = self._prepare_trial(trial_workspace, trial)
             result = self.runner.run(trial_workspace)
             accepted = self._is_improvement(result.score)
+            stdout_path, stderr_path = self._write_outputs(trial_workspace, result.stdout, result.stderr)
 
             if accepted:
                 self.best_score = result.score
+                self.no_improvement = 0
                 if self.best_dir.exists():
                     shutil.rmtree(self.best_dir)
                 shutil.copytree(trial_workspace, self.best_dir)
+            else:
+                self.no_improvement += 1
 
             self.ledger.append(
                 TrialRecord(
@@ -53,11 +67,25 @@ class ResearchLoop:
                     workspace=str(trial_workspace),
                     seconds=result.seconds,
                     error=result.error,
+                    stdout_path=str(stdout_path),
+                    stderr_path=str(stderr_path),
+                    best_score=self.best_score,
                 )
             )
+            self._save_state(trial + 1)
 
             marker = "accepted" if accepted else "rejected"
-            print(f"[{trial:04d}] {marker} score={result.score} {proposal}")
+            print(f"[{trial:04d}] {marker} score={result.score} best={self.best_score} {proposal}")
+
+            if self.config.patience is not None and self.no_improvement >= self.config.patience:
+                print(f"stopping: no improvement for {self.no_improvement} trial(s)")
+                break
+
+            if not self.config.keep_all_trials and not accepted and trial_workspace.exists():
+                shutil.rmtree(trial_workspace)
+
+        if self.config.report:
+            ReportWriter(self.run_dir).write(self.ledger.records())
 
     def _prepare_trial(self, workspace: Path, trial: int) -> str:
         if self.config.agent_command:
@@ -85,12 +113,39 @@ class ResearchLoop:
         return score < self.best_score
 
     @staticmethod
-    def _copy_workspace(source: Path, destination: Path) -> None:
+    def _copy_workspace(source: Path, destination: Path, ignore_patterns: tuple[str, ...]) -> None:
         if destination.exists():
             shutil.rmtree(destination)
         shutil.copytree(
             source,
             destination,
-            ignore=shutil.ignore_patterns("__pycache__", ".git", "runs", ".venv"),
+            ignore=shutil.ignore_patterns(*ignore_patterns),
         )
+
+    def _write_outputs(self, workspace: Path, stdout: str, stderr: str) -> tuple[Path, Path]:
+        stdout_path = workspace / "stdout.txt"
+        stderr_path = workspace / "stderr.txt"
+        stdout_path.write_text(stdout, encoding="utf-8")
+        stderr_path.write_text(stderr, encoding="utf-8")
+        return stdout_path, stderr_path
+
+    def _load_state(self) -> None:
+        if not self.config.resume or not self.state_path.exists():
+            return
+
+        state = json.loads(self.state_path.read_text(encoding="utf-8"))
+        self.best_score = state.get("best_score")
+        self.next_trial = int(state.get("next_trial", 1))
+        self.no_improvement = int(state.get("no_improvement", 0))
+
+    def _save_state(self, next_trial: int) -> None:
+        payload = {
+            "name": self.config.name,
+            "next_trial": next_trial,
+            "best_score": self.best_score,
+            "no_improvement": self.no_improvement,
+            "maximize": self.config.maximize,
+            "best_workspace": str(self.best_dir) if self.best_dir.exists() else None,
+        }
+        self.state_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
