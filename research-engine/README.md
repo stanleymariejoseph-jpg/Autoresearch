@@ -66,6 +66,7 @@ python -m autoresearch_lab validate --config examples/demo-config.json
 python -m autoresearch_lab run --config examples/demo-config.json
 python -m autoresearch_lab status --config examples/demo-config.json
 python -m autoresearch_lab report --config examples/demo-config.json
+python -m autoresearch_lab ui --config examples/demo-config.json
 ```
 
 ## Build A Windows EXE
@@ -85,6 +86,7 @@ Example:
 ```powershell
 .\dist-exe\autoresearch.exe bootstrap-project --name studio-ia-next --output-dir generated-projects
 .\dist-exe\autoresearch.exe validate --config examples\demo-config.json
+.\dist-exe\autoresearch.exe ui --config examples\demo-config.json
 ```
 
 `dist-exe/` is ignored by Git so the generated executable is not pushed to GitHub.

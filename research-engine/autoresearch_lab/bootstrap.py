@@ -58,6 +58,7 @@ def studio_ia_autoresearch_config(name: str) -> dict[str, object]:
         "agent_model": "codestral-latest",
         "agent_temperature": 0.2,
         "agent_max_tokens": 4096,
+        "objective_file": "docs/BUILD_PROGRAM.md",
         "agent_files": [
             "src/app.tsx",
             "src/styles.css",

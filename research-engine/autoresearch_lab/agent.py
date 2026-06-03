@@ -117,10 +117,20 @@ class CodeAgent:
             f"Metric direction: {direction}",
             f"Best score so far: {best_score}",
             "",
+            "Allowed editable files:",
+            *[f"- {relative}" for relative in self.files],
+            "",
+            "Forbidden changes:",
+            "- Do not edit scripts/score_project.py or any scoring/evaluation script.",
+            "- Do not edit tests just to make the score pass.",
+            "- Do not edit package manager lock files.",
+            "- Do not return any file path outside the allowed editable files list.",
+            "- If you want a better score, improve the app UI, data model, components, copy, structure, and completeness.",
+            "",
             "Return JSON only, matching this schema:",
             '{"summary":"short rationale","files":[{"path":"relative/file.py","content":"full replacement file content"}]}',
             "",
-            "Only edit the listed files. Return full replacement contents, not a diff.",
+            "Only edit allowed files. Return full replacement contents, not a diff.",
             "",
         ]
 
@@ -158,5 +168,6 @@ class CodeAgent:
 SYSTEM_PROMPT = """You are an autonomous research coding agent.
 Your job is to make one focused code improvement per trial.
 You must preserve runnable code, avoid broad rewrites, and optimize the configured metric.
+The scoring script is an external evaluator. Never modify the scoring script or any unlisted file.
 Return valid JSON only. Do not include markdown prose outside JSON.
 """

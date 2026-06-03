@@ -25,6 +25,7 @@ class ResearchConfig:
     agent_temperature: float = 0.2
     agent_max_tokens: int = 4096
     agent_files: tuple[str, ...] = ()
+    objective_file: str | None = None
     resume: bool = True
     patience: int | None = None
     baseline_first: bool = True
@@ -62,6 +63,7 @@ class ResearchConfig:
             agent_temperature=float(data.get("agent_temperature", 0.2)),
             agent_max_tokens=int(data.get("agent_max_tokens", 4096)),
             agent_files=tuple(data.get("agent_files", ())),
+            objective_file=data.get("objective_file"),
             resume=bool(data.get("resume", True)),
             patience=None if data.get("patience") is None else int(data["patience"]),
             baseline_first=bool(data.get("baseline_first", True)),

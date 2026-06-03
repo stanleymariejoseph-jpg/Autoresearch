@@ -145,12 +145,21 @@ class ResearchLoop:
         )
 
     def _objective_text(self) -> str:
+        if self.config.objective_file:
+            configured = self.config.workspace / self.config.objective_file
+            if configured.exists():
+                return configured.read_text(encoding="utf-8", errors="replace")
+
+        build_program = self.config.workspace / "docs" / "BUILD_PROGRAM.md"
+        if build_program.exists():
+            return build_program.read_text(encoding="utf-8", errors="replace")
+
         program_path = self.config.workspace / "program.md"
         if program_path.exists():
             return program_path.read_text(encoding="utf-8", errors="replace")
         return (
-            f"Improve the experiment command `{self.config.command}`. "
-            "Make small code changes that improve the parsed metric."
+            "Improve the application source files. Make small code changes that improve the parsed metric. "
+            "Do not modify scoring, tests, generated artifacts, or evaluation commands."
         )
 
     def _is_improvement(self, score: float | None) -> bool:

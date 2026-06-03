@@ -21,7 +21,9 @@ class ProjectBootstrapperTest(unittest.TestCase):
 
             data = json.loads(result.config_path.read_text(encoding="utf-8"))
             self.assertEqual(data["agent_provider"], "mistral")
+            self.assertEqual(data["objective_file"], "docs/BUILD_PROGRAM.md")
             self.assertIn("src/app.tsx", data["agent_files"])
+            self.assertNotIn("scripts/score_project.py", data["agent_files"])
 
     def test_generated_config_is_valid(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
@@ -30,6 +32,7 @@ class ProjectBootstrapperTest(unittest.TestCase):
 
             self.assertTrue(config.workspace.exists())
             self.assertEqual(config.agent_provider, "mistral")
+            self.assertEqual(config.objective_file, "docs/BUILD_PROGRAM.md")
 
 
 if __name__ == "__main__":
