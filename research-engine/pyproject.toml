@@ -1,7 +1,7 @@
 [project]
 name = "autoresearch-lab"
-version = "0.1.0"
-description = "Clean-room autonomous experiment loop"
+version = "0.2.0"
+description = "Clean-room autonomous experiment loop with optional Mistral code agent"
 requires-python = ">=3.10"
 dependencies = []
 

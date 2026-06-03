@@ -82,6 +82,34 @@ Each run writes:
 
 Set `agent_command` in the config to let another tool modify the trial workspace before the experiment command runs. The engine still handles isolation, metric parsing, acceptance, reports, and resume.
 
+## Mistral Agent Mode
+
+Set a Mistral API key:
+
+```powershell
+$env:MISTRAL_API_KEY = "your-key"
+```
+
+Then run:
+
+```powershell
+python -m autoresearch_lab run --config examples/mistral-agent-config.json
+```
+
+Key config fields:
+
+```json
+{
+  "agent_provider": "mistral",
+  "agent_model": "codestral-latest",
+  "agent_files": ["train.py", "params.json"],
+  "agent_temperature": 0.2,
+  "agent_max_tokens": 4096
+}
+```
+
+The Mistral agent receives only the files listed in `agent_files`, returns JSON with full replacement file contents, and the engine evaluates the result in an isolated trial workspace. Rejected trials are not copied into `best/`.
+
 ## Tests
 
 ```powershell

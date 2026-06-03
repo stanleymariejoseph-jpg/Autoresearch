@@ -14,6 +14,6 @@ Design goals for this implementation:
 - resumable state
 - Markdown and HTML reports
 - optional external agent command
+- optional Mistral code agent using JSON full-file replacements
 
 The earlier upstream copy was removed from the current branch history before this version was published.
-

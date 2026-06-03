@@ -20,6 +20,11 @@ class ResearchConfig:
     maximize: bool = False
     seed: int = 1337
     agent_command: str | None = None
+    agent_provider: str | None = None
+    agent_model: str = "codestral-latest"
+    agent_temperature: float = 0.2
+    agent_max_tokens: int = 4096
+    agent_files: tuple[str, ...] = ()
     resume: bool = True
     patience: int | None = None
     baseline_first: bool = True
@@ -52,6 +57,11 @@ class ResearchConfig:
             maximize=bool(data.get("maximize", False)),
             seed=int(data.get("seed", 1337)),
             agent_command=data.get("agent_command"),
+            agent_provider=data.get("agent_provider"),
+            agent_model=str(data.get("agent_model", "codestral-latest")),
+            agent_temperature=float(data.get("agent_temperature", 0.2)),
+            agent_max_tokens=int(data.get("agent_max_tokens", 4096)),
+            agent_files=tuple(data.get("agent_files", ())),
             resume=bool(data.get("resume", True)),
             patience=None if data.get("patience") is None else int(data["patience"]),
             baseline_first=bool(data.get("baseline_first", True)),
@@ -73,5 +83,11 @@ class ResearchConfig:
             raise ValueError("seconds_per_trial must be at least 1")
         if self.patience is not None and self.patience < 1:
             raise ValueError("patience must be null or at least 1")
+        if self.agent_provider and self.agent_provider not in {"mistral"}:
+            raise ValueError("agent_provider must be null or 'mistral'")
+        if self.agent_provider == "mistral" and not self.agent_files:
+            raise ValueError("agent_files is required when agent_provider is 'mistral'")
+        if self.agent_max_tokens < 1:
+            raise ValueError("agent_max_tokens must be at least 1")
         re.compile(self.metric_regex)
 

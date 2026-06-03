@@ -12,3 +12,11 @@ Operating rules:
 
 This clean-room implementation is intentionally generic. The loop can optimize a toy objective, a model training script, a benchmark, or any command that emits a numeric metric.
 
+Agent mode:
+
+- Mistral can be used as a code agent through `agent_provider: "mistral"`.
+- The agent receives only configured files.
+- The agent returns full-file JSON replacements.
+- The runner evaluates the resulting workspace.
+- Only improved trials are promoted to `best/`.
+

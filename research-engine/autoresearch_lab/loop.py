@@ -5,6 +5,7 @@ import json
 import shutil
 import subprocess
 
+from .agent import CodeAgent, MistralClient
 from .config import ResearchConfig
 from .ledger import Ledger, TrialRecord
 from .proposer import ParameterProposer
@@ -27,6 +28,7 @@ class ResearchLoop:
             seconds_per_trial=config.seconds_per_trial,
             metric_file=config.metric_file,
         )
+        self.agent = self._build_agent()
         self.best_score: float | None = None
         self.next_trial = 1
         self.no_improvement = 0
@@ -44,7 +46,25 @@ class ResearchLoop:
 
             proposal = "baseline trial"
             if not (trial == 1 and self.config.baseline_first and self.best_score is None):
-                proposal = self._prepare_trial(trial_workspace, trial)
+                try:
+                    proposal = self._prepare_trial(trial_workspace, trial)
+                except Exception as exc:
+                    self.no_improvement += 1
+                    self.ledger.append(
+                        TrialRecord(
+                            trial=trial,
+                            score=None,
+                            accepted=False,
+                            summary="agent preparation failed",
+                            workspace=str(trial_workspace),
+                            seconds=0.0,
+                            error=str(exc),
+                            best_score=self.best_score,
+                        )
+                    )
+                    self._save_state(trial + 1)
+                    print(f"[{trial:04d}] rejected score=None best={self.best_score} agent error: {exc}")
+                    continue
             result = self.runner.run(trial_workspace)
             accepted = self._is_improvement(result.score)
             stdout_path, stderr_path = self._write_outputs(trial_workspace, result.stdout, result.stderr)
@@ -88,6 +108,11 @@ class ResearchLoop:
             ReportWriter(self.run_dir).write(self.ledger.records())
 
     def _prepare_trial(self, workspace: Path, trial: int) -> str:
+        if self.agent:
+            patch = self.agent.propose(workspace, trial, self.best_score)
+            (workspace / "agent-response.json").write_text(patch.raw_response, encoding="utf-8")
+            return f"{patch.summary}; changed: {', '.join(patch.changed_files)}"
+
         if self.config.agent_command:
             completed = subprocess.run(
                 self.config.agent_command,
@@ -102,6 +127,31 @@ class ResearchLoop:
             return summary[0]
 
         return self.proposer.propose(workspace, trial).summary
+
+    def _build_agent(self) -> CodeAgent | None:
+        if self.config.agent_provider != "mistral":
+            return None
+        client = MistralClient(
+            model=self.config.agent_model,
+            temperature=self.config.agent_temperature,
+            max_tokens=self.config.agent_max_tokens,
+        )
+        objective = self._objective_text()
+        return CodeAgent(
+            client=client,
+            files=self.config.agent_files,
+            objective=objective,
+            maximize=self.config.maximize,
+        )
+
+    def _objective_text(self) -> str:
+        program_path = self.config.workspace / "program.md"
+        if program_path.exists():
+            return program_path.read_text(encoding="utf-8", errors="replace")
+        return (
+            f"Improve the experiment command `{self.config.command}`. "
+            "Make small code changes that improve the parsed metric."
+        )
 
     def _is_improvement(self, score: float | None) -> bool:
         if score is None:
