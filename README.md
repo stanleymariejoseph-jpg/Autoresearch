@@ -2,6 +2,8 @@
 
 Version PHP autonome d'Autoresearch pour organiser des projets de recherche, sources, notes, constats et taches.
 
+Ce depot contient aussi une implementation originale "clean-room" d'une boucle d'experimentation autonome dans `research-engine/`. Elle reprend l'idee generale d'une boucle de recherche automatique, sans copier le code de `karpathy/autoresearch`.
+
 ## Prerequis
 
 - PHP 8.1 ou plus recent
@@ -30,4 +32,4 @@ La base SQLite est creee automatiquement dans `data/autoresearch.sqlite`.
 - Recherche transversale dans les projets, sources, notes et constats
 - Export Markdown d'un projet
 - Application sans dependance Composer
-
+- Moteur d'experimentation autonome original dans `research-engine/`

@@ -1,0 +1,12 @@
+{
+  "name": "demo",
+  "workspace": "demo-workspace",
+  "command": "python objective.py --params params.json",
+  "metric_regex": "metric\\s*[:=]\\s*([0-9.]+)",
+  "parameter_file": "params.json",
+  "iterations": 8,
+  "seconds_per_trial": 20,
+  "maximize": false,
+  "seed": 42
+}
+
