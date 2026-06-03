@@ -218,6 +218,18 @@ becomes the fraction of tests passing, and the agent builds code to pass them.
 See `examples/saas-build/` (auth, persistence, business logic, billing — all
 test-measured) and `examples/landing-build/` (structured landing page).
 
+For a UI verified in a **real browser**, `examples/web-ui-build/` scores
+`index.html` with Playwright: it opens the page in Chromium and checks it
+renders, has a usable heading/nav/CTA, is responsive at 375px, and logs no
+console errors. Requires:
+
+```powershell
+pip install playwright
+python -m playwright install chromium
+$env:MISTRAL_API_KEY = "your-key"
+python -m autoresearch_lab run --config examples/web-ui-build-mistral-config.json
+```
+
 ```powershell
 $env:MISTRAL_API_KEY = "your-key"
 python -m autoresearch_lab run --config examples/saas-build-mistral-config.json
