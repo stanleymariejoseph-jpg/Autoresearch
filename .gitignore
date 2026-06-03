@@ -9,3 +9,4 @@ __pycache__/
 research-engine/**/__pycache__/
 research-engine/runs/
 research-engine/examples/runs/
+research-engine/generated-projects/

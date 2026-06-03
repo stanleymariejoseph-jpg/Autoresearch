@@ -68,6 +68,27 @@ python -m autoresearch_lab status --config examples/demo-config.json
 python -m autoresearch_lab report --config examples/demo-config.json
 ```
 
+## Create A New Studio IA Project
+
+```powershell
+python -m autoresearch_lab bootstrap-project --name studio-ia-next --output-dir generated-projects
+```
+
+This creates:
+
+- a React/Vite/TypeScript starter
+- Studio IA dashboard, canvas, knowledge graph, and owner console files
+- `scripts/score_project.py`
+- `autoresearch.config.json` configured for Mistral
+
+Then run:
+
+```powershell
+cd generated-projects/studio-ia-next
+$env:MISTRAL_API_KEY = "your-key"
+python -m autoresearch_lab run --config autoresearch.config.json
+```
+
 ## Outputs
 
 Each run writes:

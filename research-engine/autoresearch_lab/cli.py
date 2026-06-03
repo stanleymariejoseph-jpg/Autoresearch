@@ -4,6 +4,7 @@ from pathlib import Path
 import argparse
 import json
 
+from .bootstrap import ProjectBootstrapper
 from .config import ResearchConfig
 from .ledger import Ledger
 from .loop import ResearchLoop
@@ -26,6 +27,12 @@ def build_parser() -> argparse.ArgumentParser:
     report = subparsers.add_parser("report", help="Regenerate Markdown and HTML reports.")
     report.add_argument("--config", required=True, help="Path to a JSON config file.")
 
+    bootstrap = subparsers.add_parser("bootstrap-project", help="Create a new project from a blueprint.")
+    bootstrap.add_argument("--name", required=True, help="Project folder name.")
+    bootstrap.add_argument("--output-dir", default="generated-projects", help="Where to create the project.")
+    bootstrap.add_argument("--blueprint", default="studio-ia", help="Blueprint name.")
+    bootstrap.add_argument("--force", action="store_true", help="Overwrite existing blueprint files.")
+
     parser.add_argument("--config", help=argparse.SUPPRESS)
     return parser
 
@@ -36,6 +43,25 @@ def main() -> None:
         args.command_name = "run"
     if args.command_name is None:
         build_parser().print_help()
+        return
+
+    if args.command_name == "bootstrap-project":
+        result = ProjectBootstrapper(
+            output_dir=Path(args.output_dir).resolve(),
+            name=args.name,
+            blueprint=args.blueprint,
+        ).run(force=args.force)
+        print(
+            json.dumps(
+                {
+                    "project_dir": str(result.project_dir),
+                    "config_path": str(result.config_path),
+                    "files_written": result.files_written,
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
         return
 
     config = ResearchConfig.from_file(Path(args.config).resolve())

@@ -15,5 +15,6 @@ Design goals for this implementation:
 - Markdown and HTML reports
 - optional external agent command
 - optional Mistral code agent using JSON full-file replacements
+- `bootstrap-project` blueprint generator for new Studio IA-like applications
 
 The earlier upstream copy was removed from the current branch history before this version was published.
