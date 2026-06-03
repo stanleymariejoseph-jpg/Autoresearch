@@ -34,7 +34,7 @@ class ResearchConfig:
 
     @classmethod
     def from_file(cls, path: Path) -> "ResearchConfig":
-        data = json.loads(path.read_text(encoding="utf-8"))
+        data = json.loads(path.read_text(encoding="utf-8-sig"))
         base = path.parent
         workspace = Path(data["workspace"])
         output_dir = Path(data.get("output_dir", "runs"))

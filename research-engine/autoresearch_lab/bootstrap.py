@@ -67,7 +67,6 @@ def studio_ia_autoresearch_config(name: str) -> dict[str, object]:
             "src/components/canvas.tsx",
             "src/components/knowledge-graph.tsx",
             "src/components/owner-console.tsx",
-            "scripts/score_project.py",
         ],
     }
 
