@@ -13,3 +13,8 @@ research-engine/generated-projects/
 research-engine/build/
 research-engine/dist-exe/
 research-engine/*.spec
+research-engine/skills/
+research-engine/_skills_dl/
+research-engine/uploaded-projects/
+research-engine/examples/nanogpt-cpu/data/
+research-engine/examples/nanogpt-torch/data/

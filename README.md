@@ -33,3 +33,4 @@ La base SQLite est creee automatiquement dans `data/autoresearch.sqlite`.
 - Export Markdown d'un projet
 - Application sans dependance Composer
 - Moteur d'experimentation autonome original dans `research-engine/`
+- Exemple `nanogpt-cpu` inspire de `karpathy/autoresearch` (entrainement char-level CPU, numpy)

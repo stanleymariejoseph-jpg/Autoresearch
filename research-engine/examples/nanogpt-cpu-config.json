@@ -1,0 +1,15 @@
+{
+  "name": "nanogpt-cpu",
+  "workspace": "nanogpt-cpu",
+  "command": "python train.py",
+  "metric_regex": "val_bpb:\\s*([0-9.]+)",
+  "parameter_file": "params.json",
+  "objective_file": "program.md",
+  "iterations": 12,
+  "seconds_per_trial": 60,
+  "maximize": false,
+  "patience": 6,
+  "baseline_first": true,
+  "report": true,
+  "ignore_patterns": ["__pycache__", ".git", "runs", ".venv"]
+}

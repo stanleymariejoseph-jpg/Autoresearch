@@ -32,6 +32,10 @@ class ResearchConfig:
     keep_all_trials: bool = True
     report: bool = True
     ignore_patterns: tuple[str, ...] = ("__pycache__", ".git", "runs", ".venv")
+    skills: tuple[str, ...] = ()
+    skills_dir: Path | None = None
+    skills_max_chars: int = 2500
+    copy_skill_assets: bool = False
 
     @classmethod
     def from_file(cls, path: Path) -> "ResearchConfig":
@@ -44,6 +48,17 @@ class ResearchConfig:
             workspace = (base / workspace).resolve()
         if not output_dir.is_absolute():
             output_dir = (base / output_dir).resolve()
+
+        skills_dir_raw = data.get("skills_dir")
+        if skills_dir_raw is None:
+            default_skills = (base / "skills")
+            if not default_skills.exists():
+                default_skills = (base.parent / "skills")
+            skills_dir = default_skills.resolve() if default_skills.exists() else None
+        else:
+            skills_dir = Path(skills_dir_raw)
+            if not skills_dir.is_absolute():
+                skills_dir = (base / skills_dir).resolve()
 
         config = cls(
             name=str(data.get("name", path.stem)),
@@ -70,6 +85,10 @@ class ResearchConfig:
             keep_all_trials=bool(data.get("keep_all_trials", True)),
             report=bool(data.get("report", True)),
             ignore_patterns=tuple(data.get("ignore_patterns", cls.ignore_patterns)),
+            skills=tuple(data.get("skills", ())),
+            skills_dir=skills_dir,
+            skills_max_chars=int(data.get("skills_max_chars", 2500)),
+            copy_skill_assets=bool(data.get("copy_skill_assets", False)),
         )
         config.validate()
         return config

@@ -1,0 +1,9 @@
+{
+  "block_size": 16,
+  "n_embed": 32,
+  "batch_size": 32,
+  "learning_rate": 0.5,
+  "max_seconds": 8.0,
+  "warmup_frac": 0.1,
+  "seed": 1337
+}

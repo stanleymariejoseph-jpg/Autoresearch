@@ -1,0 +1,21 @@
+{
+  "name": "landing-build-mistral",
+  "workspace": "landing-build",
+  "command": "python check.py",
+  "metric_regex": "AUTORESEARCH_SCORE:\\s*([0-9.]+)",
+  "objective_file": "brief.md",
+  "iterations": 15,
+  "seconds_per_trial": 90,
+  "maximize": true,
+  "patience": 6,
+  "baseline_first": true,
+  "report": true,
+  "ignore_patterns": ["__pycache__", ".git", "runs", ".venv", "skills"],
+  "agent_provider": "mistral",
+  "agent_model": "mistral-large-latest",
+  "agent_temperature": 0.3,
+  "agent_max_tokens": 8192,
+  "agent_files": ["index.html"],
+  "skills": ["ui-ux-pro-max", "frontend-design"],
+  "skills_max_chars": 3000
+}

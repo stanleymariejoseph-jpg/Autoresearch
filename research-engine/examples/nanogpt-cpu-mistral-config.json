@@ -1,0 +1,23 @@
+{
+  "name": "nanogpt-cpu-mistral",
+  "workspace": "nanogpt-cpu",
+  "command": "python train.py",
+  "metric_regex": "val_bpb:\\s*([0-9.]+)",
+  "parameter_file": "params.json",
+  "objective_file": "program.md",
+  "iterations": 40,
+  "seconds_per_trial": 90,
+  "maximize": false,
+  "patience": 15,
+  "baseline_first": true,
+  "report": true,
+  "ignore_patterns": ["__pycache__", ".git", "runs", ".venv"],
+  "agent_provider": "mistral",
+  "agent_model": "mistral-large-latest",
+  "agent_temperature": 0.2,
+  "agent_max_tokens": 8192,
+  "agent_files": [
+    "train.py",
+    "params.json"
+  ]
+}

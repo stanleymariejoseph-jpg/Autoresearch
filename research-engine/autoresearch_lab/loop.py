@@ -11,6 +11,7 @@ from .ledger import Ledger, TrialRecord
 from .proposer import ParameterProposer
 from .report import ReportWriter
 from .runner import ExperimentRunner
+from .skills import build_prompt, copy_skill_assets, load_skills
 
 
 class ResearchLoop:
@@ -28,21 +29,28 @@ class ResearchLoop:
             seconds_per_trial=config.seconds_per_trial,
             metric_file=config.metric_file,
         )
+        self.skills = load_skills(config.skills, config.skills_dir)
         self.agent = self._build_agent()
         self.best_score: float | None = None
         self.next_trial = 1
         self.no_improvement = 0
+        self.last_failure: str | None = None
 
-    def run(self) -> None:
+    def run(self, stop_event=None) -> None:
         self.run_dir.mkdir(parents=True, exist_ok=True)
         self.trials_dir.mkdir(parents=True, exist_ok=True)
         self._load_state()
 
         stop_trial = self.next_trial + self.config.iterations
         for trial in range(self.next_trial, stop_trial):
+            if stop_event is not None and stop_event.is_set():
+                print("stopping: requested by user")
+                break
             trial_workspace = self.trials_dir / f"trial-{trial:04d}"
             source = self.best_dir if self.best_dir.exists() else self.config.workspace
             self._copy_workspace(source, trial_workspace, self.config.ignore_patterns)
+            if self.config.copy_skill_assets and self.skills:
+                copy_skill_assets(self.skills, trial_workspace)
 
             proposal = "baseline trial"
             if not (trial == 1 and self.config.baseline_first and self.best_score is None):
@@ -72,11 +80,17 @@ class ResearchLoop:
             if accepted:
                 self.best_score = result.score
                 self.no_improvement = 0
+                self.last_failure = None
                 if self.best_dir.exists():
                     shutil.rmtree(self.best_dir)
                 shutil.copytree(trial_workspace, self.best_dir)
             else:
                 self.no_improvement += 1
+                if result.score is None:
+                    err = (result.stderr or "").strip() or (result.error or "")
+                    self.last_failure = err or None
+                else:
+                    self.last_failure = None
 
             self.ledger.append(
                 TrialRecord(
@@ -109,7 +123,7 @@ class ResearchLoop:
 
     def _prepare_trial(self, workspace: Path, trial: int) -> str:
         if self.agent:
-            patch = self.agent.propose(workspace, trial, self.best_score)
+            patch = self.agent.propose(workspace, trial, self.best_score, self.last_failure)
             (workspace / "agent-response.json").write_text(patch.raw_response, encoding="utf-8")
             return f"{patch.summary}; changed: {', '.join(patch.changed_files)}"
 
@@ -137,6 +151,9 @@ class ResearchLoop:
             max_tokens=self.config.agent_max_tokens,
         )
         objective = self._objective_text()
+        skills_prompt = build_prompt(self.skills, self.config.skills_max_chars)
+        if skills_prompt:
+            objective = objective + "\n\n" + skills_prompt
         return CodeAgent(
             client=client,
             files=self.config.agent_files,

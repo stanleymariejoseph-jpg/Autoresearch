@@ -32,17 +32,18 @@ class MistralClient:
         self.temperature = temperature
         self.max_tokens = max_tokens
 
-    def complete(self, messages: list[dict[str, str]]) -> str:
+    def complete(self, messages: list[dict[str, str]], json_mode: bool = True) -> str:
         if not self.api_key:
             raise RuntimeError("MISTRAL_API_KEY is required for Mistral agent mode")
 
-        payload = {
+        payload: dict[str, Any] = {
             "model": self.model,
             "messages": messages,
             "temperature": self.temperature,
             "max_tokens": self.max_tokens,
-            "response_format": {"type": "json_object"},
         }
+        if json_mode:
+            payload["response_format"] = {"type": "json_object"}
         request = urllib.request.Request(
             self.endpoint,
             data=json.dumps(payload).encode("utf-8"),
@@ -75,8 +76,14 @@ class CodeAgent:
         self.objective = objective
         self.maximize = maximize
 
-    def propose(self, workspace: Path, trial: int, best_score: float | None) -> AgentPatch:
-        prompt = self._build_prompt(workspace, trial, best_score)
+    def propose(
+        self,
+        workspace: Path,
+        trial: int,
+        best_score: float | None,
+        last_failure: str | None = None,
+    ) -> AgentPatch:
+        prompt = self._build_prompt(workspace, trial, best_score, last_failure)
         raw = self.client.complete(
             [
                 {"role": "system", "content": SYSTEM_PROMPT},
@@ -109,7 +116,13 @@ class CodeAgent:
             raise ValueError("agent returned no changed files")
         return AgentPatch(summary=summary, changed_files=tuple(changed), raw_response=raw)
 
-    def _build_prompt(self, workspace: Path, trial: int, best_score: float | None) -> str:
+    def _build_prompt(
+        self,
+        workspace: Path,
+        trial: int,
+        best_score: float | None,
+        last_failure: str | None = None,
+    ) -> str:
         direction = "maximize" if self.maximize else "minimize"
         parts = [
             f"Trial: {trial}",
@@ -117,6 +130,20 @@ class CodeAgent:
             f"Metric direction: {direction}",
             f"Best score so far: {best_score}",
             "",
+        ]
+        if last_failure:
+            parts.extend(
+                [
+                    "## Previous trial failure",
+                    "The previous attempt FAILED. Read this carefully and avoid the same mistake.",
+                    "Prefer a smaller, safer change this time.",
+                    "```",
+                    last_failure.strip()[-2000:],
+                    "```",
+                    "",
+                ]
+            )
+        parts.extend([
             "Allowed editable files:",
             *[f"- {relative}" for relative in self.files],
             "",
@@ -132,7 +159,7 @@ class CodeAgent:
             "",
             "Only edit allowed files. Return full replacement contents, not a diff.",
             "",
-        ]
+        ])
 
         for relative in self.files:
             path = self._safe_path(workspace, relative)

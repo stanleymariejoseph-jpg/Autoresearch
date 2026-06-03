@@ -29,7 +29,7 @@ def build_parser() -> argparse.ArgumentParser:
     report.add_argument("--config", required=True, help="Path to a JSON config file.")
 
     ui = subparsers.add_parser("ui", help="Start a local web interface.")
-    ui.add_argument("--config", required=True, help="Path to a JSON config file.")
+    ui.add_argument("--config", help="Optional path to a JSON config file (can also be set from the UI).")
     ui.add_argument("--host", default="127.0.0.1", help="Host to bind.")
     ui.add_argument("--port", type=int, default=8765, help="Port to bind.")
     ui.add_argument("--no-open", action="store_true", help="Do not open the browser.")
@@ -71,6 +71,17 @@ def main() -> None:
         )
         return
 
+    if args.command_name == "ui":
+        config = ResearchConfig.from_file(Path(args.config).resolve()) if args.config else None
+        serve_ui(
+            config,
+            host=args.host,
+            port=args.port,
+            open_browser=not args.no_open,
+            base_dir=Path.cwd(),
+        )
+        return
+
     config = ResearchConfig.from_file(Path(args.config).resolve())
 
     if args.command_name == "run":
@@ -94,10 +105,6 @@ def main() -> None:
     if args.command_name == "report":
         ReportWriter(run_dir).write(ledger.records())
         print(f"wrote {run_dir / 'report.md'} and {run_dir / 'report.html'}")
-        return
-
-    if args.command_name == "ui":
-        serve_ui(config, host=args.host, port=args.port, open_browser=not args.no_open)
         return
 
 
