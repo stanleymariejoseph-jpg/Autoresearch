@@ -10,3 +10,6 @@ research-engine/**/__pycache__/
 research-engine/runs/
 research-engine/examples/runs/
 research-engine/generated-projects/
+research-engine/build/
+research-engine/dist-exe/
+research-engine/*.spec

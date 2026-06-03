@@ -68,6 +68,27 @@ python -m autoresearch_lab status --config examples/demo-config.json
 python -m autoresearch_lab report --config examples/demo-config.json
 ```
 
+## Build A Windows EXE
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\build_exe.ps1
+```
+
+The executable is created locally at:
+
+```text
+dist-exe/autoresearch.exe
+```
+
+Example:
+
+```powershell
+.\dist-exe\autoresearch.exe bootstrap-project --name studio-ia-next --output-dir generated-projects
+.\dist-exe\autoresearch.exe validate --config examples\demo-config.json
+```
+
+`dist-exe/` is ignored by Git so the generated executable is not pushed to GitHub.
+
 ## Create A New Studio IA Project
 
 ```powershell
